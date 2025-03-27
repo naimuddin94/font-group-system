@@ -1,46 +1,29 @@
+import status from 'http-status';
 import multer from 'multer';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../utils';
-import status from 'http-status';
-import fs from 'fs';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let folderPath = './public';
-
-    if (file.mimetype.startsWith('image')) {
-      folderPath = './public/images';
-    } else if (file.mimetype.startsWith('video')) {
-      folderPath = './public/videos';
-    } else {
-      cb(
-        new AppError(status.BAD_REQUEST, 'Only images and videos are allowed'),
-        './public'
-      );
-      return;
-    }
-
-    // Check if the folder exists, if not, create it
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-
-    cb(null, folderPath);
+    cb(null, 'uploads/fonts/');
   },
-
-  filename(_req, file, cb) {
-    const fileExt = path.extname(file.originalname);
-    const fileName = `${file.originalname
-      .replace(fileExt, '')
-      .toLocaleLowerCase()
-      .split(' ')
-      .join('-')}-${uuidv4()}`;
-
-    cb(null, fileName + fileExt);
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /ttf/;
+    const extname = fileTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    if (extname) {
+      return cb(null, true);
+    }
+    cb(new AppError(status.BAD_REQUEST, 'Only TTF files are allowed'));
+  },
+});
 
 export default upload;

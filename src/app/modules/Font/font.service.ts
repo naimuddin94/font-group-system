@@ -1,133 +1,74 @@
-import status from 'http-status';
-import { AppError } from '../../utils';
+import fontkit from 'fontkit';
+import fs from 'fs/promises';
 import { IFont } from './font.interface';
-import Font from './font.model';
-import { IFontGroup } from '../FontGroup/fontGroup.interface';
-import FontGroup from '../FontGroup/fontGroup.model';
+import FontModel from './font.model';
 
-const createFont = async (data: IFont) => {
-  const font = await Font.findOne({ name: data.name });
+interface FontMetadata {
+  name: string;
+  family: string;
+  style: string;
+}
 
-  if (font) {
-    throw new AppError(status.BAD_REQUEST, 'Font already exists');
-  }
+const extractFontsFromTTF = async (
+  filePath: string
+): Promise<FontMetadata[]> => {
+  try {
+    const buffer = await fs.readFile(filePath);
+    const font = fontkit.create(buffer);
 
-  const newFont = new Font(data);
-  await newFont.save();
+    let fonts: FontMetadata[] = [];
 
-  return newFont;
-};
-
-const getAllFonts = async () => {
-  return await Font.find();
-};
-
-const getFontById = async (id: string) => {
-  return await Font.findById(id);
-};
-
-const updateFont = async (id: string, data: Partial<IFont>) => {
-  const font = await Font.findById(id);
-
-  if (!font) {
-    throw new AppError(status.NOT_FOUND, 'Font not found');
-  }
-
-  const updatedFont = await Font.findByIdAndUpdate(id, data, { new: true });
-
-  return updatedFont;
-};
-
-const deleteFont = async (id: string) => {
-  const font = await Font.findById(id);
-
-  if (!font) {
-    throw new AppError(status.NOT_FOUND, 'Font not found');
-  }
-
-  await Font.findByIdAndDelete(id);
-
-  return null;
-};
-
-const createFontGroup = async (data: IFontGroup) => {
-  // Ensure that all fonts are valid
-  const fonts = await Font.find({ _id: { $in: data.fonts } });
-
-  if (fonts.length !== data.fonts.length) {
-    throw new AppError(status.BAD_REQUEST, 'One or more fonts are invalid');
-  }
-
-  const fontGroup = new FontGroup(data);
-  await fontGroup.save();
-
-  return fontGroup;
-};
-
-const getAllFontGroups = async () => {
-  return await FontGroup.find().populate('fonts');
-};
-
-const getFontGroupById = async (id: string) => {
-  return await FontGroup.findById(id).populate('fonts');
-};
-
-const updateFontGroup = async (id: string, data: Partial<IFontGroup>) => {
-  const fontGroup = await FontGroup.findById(id);
-
-  if (!fontGroup) {
-    throw new AppError(status.NOT_FOUND, 'Font Group not found');
-  }
-
-  // If fonts are being updated, ensure that all font references are valid
-  if (data.fonts) {
-    const fonts = await Font.find({ _id: { $in: data.fonts } });
-
-    if (fonts.length !== data.fonts.length) {
-      throw new AppError(status.BAD_REQUEST, 'One or more fonts are invalid');
+    if ('fonts' in font) {
+      // FontCollection case (e.g., .ttc files)
+      fonts = font.fonts.map((f) => ({
+        name: f.fullName || 'Unknown',
+        family: f.familyName || 'Unknown',
+        style: f.subfamilyName || 'Regular',
+      }));
+    } else {
+      // Single Font case (e.g., .ttf files)
+      fonts = [
+        {
+          name: font.fullName || 'Unknown',
+          family: font.familyName || 'Unknown',
+          style: font.subfamilyName || 'Regular',
+        },
+      ];
     }
+
+    return fonts;
+  } catch (error) {
+    throw new Error(
+      `Failed to extract font metadata: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
-
-  const updatedFontGroup = await FontGroup.findByIdAndUpdate(id, data, { new: true });
-
-  return updatedFontGroup;
 };
 
-const deleteFontGroup = async (id: string) => {
-  const fontGroup = await FontGroup.findById(id);
+const createFontsFromTTF = async (filePath: string): Promise<IFont[]> => {
+  const fontsData = await extractFontsFromTTF(filePath);
 
-  if (!fontGroup) {
-    throw new AppError(status.NOT_FOUND, 'Font Group not found');
-  }
+  const savedFonts = await Promise.all(
+    fontsData.map(async (fontData) => {
+      const existingFont = await FontModel.findOne({ name: fontData.name });
 
-  await FontGroup.findByIdAndDelete(id);
+      if (!existingFont) {
+        const newFont = new FontModel({
+          name: fontData.name,
+          family: fontData.family,
+          style: fontData.style,
+        });
+        return (await newFont.save()).toObject();
+      }
 
-  return null;
-};
+      return existingFont.toObject();
+    })
+  );
 
-const calculateFontGroupFontCount = async () => {
-  const result = await FontGroup.aggregate([
-    { $unwind: "$fonts" },
-    { $group: { _id: null, totalFontCount: { $sum: 1 } } }
-  ]);
-
-  if (result.length === 0) {
-    throw new AppError(status.NOT_FOUND, 'No font groups found');
-  }
-
-  return { totalFontCount: result[0].totalFontCount };
+  return savedFonts;
 };
 
 export const FontService = {
-  createFont,
-  getAllFonts,
-  getFontById,
-  updateFont,
-  deleteFont,
-  createFontGroup,
-  getAllFontGroups,
-  getFontGroupById,
-  updateFontGroup,
-  deleteFontGroup,
-  calculateFontGroupFontCount,
+  createFontsFromTTF,
 };
