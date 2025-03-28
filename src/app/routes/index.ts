@@ -1,15 +1,15 @@
-// import { Router } from 'express';
+import { Router } from 'express';
+import { FontRoutes } from '../modules/Font/font.route';
 
+const router = Router();
 
-// const router = Router();
+const moduleRoutes = [
+  {
+    path: '/fonts',
+    route: FontRoutes,
+  },
+];
 
-// const moduleRoutes = [
-//   {
-//     path: '/',
-//     route: '',
-//   },
-// ];
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
 
-// moduleRoutes.forEach((route) => router.use(route.path, route.route));
-
-// export default router;
+export default router;

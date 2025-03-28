@@ -58,6 +58,7 @@ const createFontsFromTTF = async (filePath: string): Promise<IFont[]> => {
           name: fontData.name,
           family: fontData.family,
           style: fontData.style,
+          path: filePath,
         });
         return (await newFont.save()).toObject();
       }
@@ -69,6 +70,11 @@ const createFontsFromTTF = async (filePath: string): Promise<IFont[]> => {
   return savedFonts;
 };
 
+const fetchFontsFromDB = async () => {
+  return await FontModel.find();
+};
+
 export const FontService = {
   createFontsFromTTF,
+  fetchFontsFromDB,
 };

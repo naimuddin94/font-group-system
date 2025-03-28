@@ -11,9 +11,13 @@ const fontSchema = new mongoose.Schema<IFont>({
     type: String,
     default: 'normal',
   },
-  previewText: {
+  family: {
     type: String,
-    default: 'Example Style',
+    required: false,
+  },
+  path: {
+    type: String,
+    required: true,
   },
 });
 

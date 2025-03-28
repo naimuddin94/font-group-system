@@ -1,4 +1,3 @@
-
 import { Document } from 'mongoose';
 
 type FontStyle =
@@ -12,5 +11,6 @@ type FontStyle =
 export interface IFont extends Document {
   name: string;
   style: FontStyle;
-  previewText: string;
+  family: string;
+  path: string;
 }
