@@ -1,6 +1,6 @@
 import { Document, Types } from 'mongoose';
 
-export interface IFontGroup extends Document {
-  name: string;
+export interface IGroup extends Document {
+  groupTitle: string;
   fonts: Types.ObjectId[];
 }
