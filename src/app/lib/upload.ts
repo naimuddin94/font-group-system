@@ -1,11 +1,21 @@
+import fs from 'fs'; // Import fs module
 import status from 'http-status';
 import multer from 'multer';
 import path from 'path';
 import { AppError } from '../utils';
 
+// Ensure the folder exists or create it
+const ensureFolderExists = (folderPath: string) => {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/fonts/');
+    const folderPath = 'public/fonts/';
+    ensureFolderExists(folderPath); // Ensure the folder exists
+    cb(null, folderPath);
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
