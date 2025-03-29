@@ -9,4 +9,6 @@ router
   .post(upload.single('file'), FontController.saveFont)
   .get(FontController.fetchFonts);
 
+router.route('/:id').delete(FontController.removeFont);
+
 export const FontRoutes = router;

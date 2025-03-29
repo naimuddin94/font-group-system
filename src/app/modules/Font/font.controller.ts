@@ -18,4 +18,12 @@ const fetchFonts = asyncHandler(async (req, res) => {
     .json(new AppResponse(status.OK, result, 'Fonts retrieved successfully'));
 });
 
-export const FontController = { saveFont, fetchFonts };
+const removeFont = asyncHandler(async (req, res) => {
+  const result = await FontService.removeFontFromDB(req.params.id);
+
+  res
+    .status(status.OK)
+    .json(new AppResponse(status.OK, result, 'Fonts remove successfully'));
+});
+
+export const FontController = { saveFont, fetchFonts, removeFont };
