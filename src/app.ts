@@ -16,7 +16,7 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: ['https://font-group-system-client.vercel.app'],
   })
 );
 app.use(cookieParser());
