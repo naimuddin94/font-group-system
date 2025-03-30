@@ -119,7 +119,13 @@ const removeFontFromDB = async (id: string) => {
     );
 
     const filePath = path.resolve(font.path);
-    await fs.unlink(filePath);
+
+    try {
+      await fs.access(filePath);
+      await fs.unlink(filePath);
+    } catch {
+      console.log(`File not found: ${filePath}`);
+    }
 
     await session.commitTransaction();
     session.endSession();
