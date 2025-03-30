@@ -11,8 +11,28 @@ import FontModel from './font.model';
 interface FontMetadata {
   name: string;
   family: string;
+  weight: string | number;
   style: string;
 }
+
+const getFontStyle = (font: any): 'normal' | 'italic' => {
+  if (
+    font['post'] &&
+    font['post'].italicAngle &&
+    font['post'].italicAngle !== 0
+  ) {
+    return 'italic';
+  }
+  return 'normal';
+};
+
+const getFontWeight = (font: any): string | number => {
+  if (font['OS/2'] && font['OS/2'].usWeightClass) {
+    return font['OS/2'].usWeightClass; // Returns numeric weight (100–900)
+  }
+
+  return 'normal';
+};
 
 const extractFontsFromTTF = async (
   filePath: string
@@ -28,15 +48,17 @@ const extractFontsFromTTF = async (
       fonts = font.fonts.map((f) => ({
         name: f.fullName || 'Unknown',
         family: f.familyName || 'Unknown',
-        style: f.subfamilyName || 'Regular',
+        style: getFontStyle(f),
+        weight: getFontWeight(f),
       }));
     } else {
       // Single Font case (e.g., .ttf files)
       fonts = [
         {
-          name: font.fullName || 'Unknown',
-          family: font.familyName || 'Unknown',
-          style: font.subfamilyName || 'Regular',
+          name: font.fullName,
+          family: font.familyName,
+          style: getFontStyle(font),
+          weight: getFontWeight(font),
         },
       ];
     }

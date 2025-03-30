@@ -12,5 +12,6 @@ export interface IFont extends Document {
   name: string;
   style: FontStyle;
   family: string;
+  weight: string;
   path: string;
 }

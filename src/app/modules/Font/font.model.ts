@@ -16,6 +16,10 @@ const fontSchema = new mongoose.Schema<IFont>(
       type: String,
       required: false,
     },
+    weight: {
+      type: String,
+      default: 'normal',
+    },
     path: {
       type: String,
       required: true,
